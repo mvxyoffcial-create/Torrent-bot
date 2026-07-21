@@ -22,7 +22,7 @@ LOCAL_API_URL = "http://localhost:8081"
 # ==== Userbot (for files between 2GB and 4GB) ====
 # Session string/name for a logged-in USER account (not a bot).
 # That account needs Telegram Premium to send files >2GB (up to 4GB).
-USE_USERBOT_FOR_LARGE = True
+USE_USERBOT_FOR_LARGE = False
 USERBOT_SESSION = "userbot"          # pyrogram session name, generated once via login
 
 # ==== Local storage ====
