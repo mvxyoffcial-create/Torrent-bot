@@ -1,56 +1,56 @@
-import time
-import random
-import string
+import os
 
-import motor.motor_asyncio
+import libtorrent as lt
 
 import config
 
-client = motor.motor_asyncio.AsyncIOMotorClient(config.MONGO_URI)
-db = client[config.DB_NAME]
-files_col = db["files"]
+_session: lt.session | None = None
 
 
-def gen_short_id(length: int = 8) -> str:
-    chars = string.ascii_letters + string.digits
-    return "".join(random.choice(chars) for _ in range(length))
+def get_session() -> lt.session:
+    global _session
+    if _session is None:
+        _session = lt.session()
+        _session.listen_on(config.SEED_PORT_MIN, config.SEED_PORT_MAX)
+    return _session
 
 
-async def save_file(
-    file_name: str,
-    file_size: int,
-    mime_type: str,
-    channel_msg_id: int,
-    uploader_id: int,
-    magnet: str | None = None,
-    info_hash: str | None = None,
-) -> str:
-    """Insert file metadata and return a short permanent id. Retries on id collision."""
-    for _ in range(5):
-        short_id = gen_short_id()
-        doc = {
-            "_id": short_id,
-            "file_name": file_name,
-            "file_size": file_size,
-            "mime_type": mime_type,
-            "channel_msg_id": channel_msg_id,
-            "uploader_id": uploader_id,
-            "upload_date": time.time(),
-            "magnet": magnet,
-            "info_hash": info_hash,
-            "downloads": 0,
+def create_torrent_and_seed(file_path: str):
+    """
+    Hashes the local file, writes a .torrent, builds a magnet link,
+    and starts seeding it in-process so peers can pull it P2P.
+    Returns (magnet_uri, info_hash, torrent_path)
+    """
+    fs = lt.file_storage()
+    lt.add_files(fs, file_path)
+    t = lt.create_torrent(fs)
+
+    for tr in config.TRACKERS:
+        t.add_tracker(tr)
+    t.set_creator("TeleBinBot")
+
+    lt.set_piece_hashes(t, os.path.dirname(file_path))
+    torrent_data = lt.bencode(t.generate())
+
+    os.makedirs(config.TORRENT_DIR, exist_ok=True)
+    torrent_path = os.path.join(
+        config.TORRENT_DIR, os.path.basename(file_path) + ".torrent"
+    )
+    with open(torrent_path, "wb") as f:
+        f.write(torrent_data)
+
+    info = lt.torrent_info(torrent_path)
+    info_hash = str(info.info_hash())
+    magnet = lt.make_magnet_uri(info)
+
+    ses = get_session()
+    handle = ses.add_torrent(
+        {
+            "ti": info,
+            "save_path": os.path.dirname(file_path),
+            "seed_mode": True,
         }
-        try:
-            await files_col.insert_one(doc)
-            return short_id
-        except Exception:
-            continue
-    raise RuntimeError("Could not generate a unique short id")
+    )
+    handle.set_upload_limit(0)  # unlimited
 
-
-async def get_file(short_id: str):
-    return await files_col.find_one({"_id": short_id})
-
-
-async def increment_downloads(short_id: str):
-    await files_col.update_one({"_id": short_id}, {"$inc": {"downloads": 1}})
+    return magnet, info_hash, torrent_path
