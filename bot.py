@@ -9,12 +9,21 @@ import db
 import torrent as torrent_mod
 from health import start_health_server
 
+
+def get_api_server():
+    """Formats the API server URL into a format accepted by Pyrogram (host:port or IP:port)."""
+    if not getattr(config, "LOCAL_SERVER", False) or not getattr(config, "LOCAL_API_URL", None):
+        return None
+    # Strip protocol prefix if present, as Pyrogram expects 'host:port'
+    return config.LOCAL_API_URL.replace("http://", "").replace("https://", "").rstrip("/")
+
+
 bot = Client(
     "filebot",
     api_id=config.API_ID,
     api_hash=config.API_HASH,
     bot_token=config.BOT_TOKEN,
-    base_url=config.LOCAL_API_URL if config.LOCAL_SERVER else None,
+    api_server=get_api_server(),
 )
 
 userbot = (
