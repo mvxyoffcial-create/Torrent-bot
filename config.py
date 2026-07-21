@@ -10,7 +10,7 @@ BOT_TOKEN = "8955122333:AAEqVijtClBjLLY-rFFsQZWN5wXRFfwmXVs"
 BIN_CHANNEL = -1004393509819
 
 # ==== MongoDB ====
-MONGO_URI = "mongodb+srv://user:pass@cluster.mongodb.net"
+MONGO_URI = "mongodb+srv://cloudnestoffcail_db_user:Venura8907@cluster0.hjqkg75.mongodb.net/?appName=Cluster0"
 DB_NAME = "filestore"
 
 # ==== Local Bot API server ====
