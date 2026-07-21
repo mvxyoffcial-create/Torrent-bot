@@ -1,13 +1,13 @@
 # ==== Telegram API credentials (from https://my.telegram.org) ====
-API_ID = 12345                       # your api_id
-API_HASH = "your_api_hash_here"      # your api_hash
+API_ID = 36282056                       # your api_id
+API_HASH = "3a948acece533f362b4c90b2b3c14b60"      # your api_hash
 
 # ==== Bot ====
-BOT_TOKEN = "123456:ABC-your-bot-token"
+BOT_TOKEN = "8955122333:AAEqVijtClBjLLY-rFFsQZWN5wXRFfwmXVs"
 
 # ==== Bin channel (private channel where all files are stored) ====
 # Bot AND userbot must both be admins here.
-BIN_CHANNEL = -1001234567890
+BIN_CHANNEL = -1004393509819
 
 # ==== MongoDB ====
 MONGO_URI = "mongodb+srv://user:pass@cluster.mongodb.net"
